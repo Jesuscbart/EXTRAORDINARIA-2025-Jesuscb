@@ -1,27 +1,31 @@
-import { useSignal } from "@preact/signals";
-import Counter from "../islands/Counter.tsx";
 import Axios from "axios";
-import { getCookies } from "@std/http/cookie";
+import { Character } from "../types.ts";
+import { FreshContext, Handlers, PageProps } from "$fresh/server.ts";
+import CharactersList from "../components/CharactersList.tsx";
 
-export default function Home() {
-  const count = useSignal(3);
-  return (
-    <div class="px-4 py-8 mx-auto bg-[#86efac]">
-      <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center">
-        <img
-          class="my-6"
-          src="/logo.svg"
-          width="128"
-          height="128"
-          alt="the Fresh logo: a sliced lemon dripping with juice"
-        />
-        <h1 class="text-4xl font-bold">Welcome to Fresh</h1>
-        <p class="my-4">
-          Try updating this message in the
-          <code class="mx-2">./routes/index.tsx</code> file, and refresh.
-        </p>
-        <Counter count={count} />
-      </div>
-    </div>
-  );
+type Data = {
+  characters: Character[];
 }
+
+export const handler: Handlers<Character[]> = {
+  async GET(_req: Request, ctx: FreshContext) {
+    
+    const response = await Axios.get<Data>("https://rickandmortyapi.com/api/character/?page=1");
+
+    const characters = response.data.characters;
+
+    return ctx.render({characters})
+  },
+};
+
+export default function Page(props: PageProps<Data>) {
+
+  const characters = props.data.characters;
+
+  return (
+    <>
+      <h1>Rick and Morty Characters</h1>
+      <CharactersList characters={characters}/>
+    </>
+  );
+};
